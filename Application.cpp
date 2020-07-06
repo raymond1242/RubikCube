@@ -22,34 +22,15 @@
 #include "shaders.h"
 #include <cmath>
 
+using namespace std;
+
 constexpr auto PI = 3.14159;
 constexpr auto sizeW = 700;
 constexpr auto sizeH = 550;
 
 int mouseoldx, mouseoldy; // For mouse motion
-//GLdouble eyeloc = 2.0; // Where to look from; initially 0 -2, 2
-GLdouble eyeY = 0.0;
-GLdouble eyeZ = 2.828427;
-GLdouble eyeX = 0.0;
-
-GLdouble UpX = 0.0;
-GLdouble UpY = 1.0;
-GLdouble UpZ = -1.0;
-
-GLdouble originX = 0.0;
-GLdouble originY = 0.0;
-GLdouble originZ = 0.0;
 
 GLuint ShaderProgram; // shaders
-GLuint projectionPos, modelviewPos; // Locations of uniform variables
-glm::mat4 projection, modelview; // The mvp matrices themselves
-
-GLdouble angle = 5;
-GLdouble Nangle = -5;
-GLdouble cosAngle = cos(angle * PI / 180);
-GLdouble sinAngle = sin(angle * PI / 180);
-GLdouble cosNangle = cos(Nangle * PI / 180);
-GLdouble sinNangle = sin(Nangle * PI / 180);
 
 void GetShaders() {
     std::string vertex_shader_path;
@@ -72,27 +53,25 @@ void GetShaders() {
     ShaderProgram = initprogram(vertexshader, fragmentshader);
 }
 
-
-
 struct Scenario {
     double Eye[3] = { 0.0, 0.0, 2.828427 };
     double Up[3] = { 0.0,1.0,-1.0 };
     double Center[3] = { 0.0,0.0,0.0 };
-
     GLuint ProjectionPos, ModelViewPos; // Locations of uniform variables
     glm::mat4 Projection, ModelView; // The mvp matrices themselves
-
     GLdouble angle, cosAngle[2], sinAngle[2];
-
     int Shader;
     Rubik rb;
-
+    //int mouseoldx, mouseoldy; // For mouse motion
     GLdouble getUpz(GLdouble y, GLdouble z) { return -y / z; }
 
     void updateModelView() {
         Up[2] = getUpz(Eye[1], Eye[2]);
         ModelView = glm::lookAt(glm::vec3(Eye[0], Eye[1], Eye[2]), glm::vec3(Center[0], Center[1], Center[2]), glm::vec3(Up[0], Up[1], Up[2]));
-        glUniformMatrix4fv(ModelViewPos, 1, GL_FALSE, &ModelView[0][0]);
+        glUniformMatrix4fv(ModelViewPos, 1, GL_FALSE, glm::value_ptr(ModelView));
+        //glm::mat4 temp(1.0);
+        //ModelView = glm::rotate(temp, glm::radians(10.0f), gl::vec3(0.0, 1.0, 0.0));
+	//
     }
 
     void Move(int i, int j, int N) {
@@ -103,6 +82,12 @@ struct Scenario {
         updateModelView();
     }
 
+    void MoveUp() {
+        glm::mat4 temp(1.0);
+        ModelView = glm::rotate(temp, glm::radians(1.0f), glm::vec3(0.0, 0.0, 1.0));
+        glUniformMatrix4fv(ModelViewPos, 1, GL_FALSE, glm::value_ptr(ModelView));
+    }
+	
     void ResetPositions() {
         Eye[0] = 0.0; Eye[1] = 0.0; Eye[2] = 2.828427;
         Up[0] = 0.0; Up[1] = 1.0; Up[2] = -1.0;
@@ -114,7 +99,7 @@ struct Scenario {
         Shader = ShaderProgram;
         rb.SetUp(Shader);
 
-        angle = 5;
+        angle = 1;
         GLdouble angleRadian = angle * PI / 180;
         cosAngle[0] = cos(angleRadian); sinAngle[0] = sin(angleRadian);
         cosAngle[1] = cos(-angleRadian); sinAngle[1] = sin(-angleRadian);
@@ -139,57 +124,45 @@ struct Scenario {
     void Delete() { rb.Delete(); }
 };
 
-GLdouble getUpz(GLdouble y, GLdouble z) {
-    return -y / z;
+Scenario* scene;
+
+void mouse_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            double x, y;
+            glfwGetCursorPos(window, &x, &y);
+            mouseoldx = (int)x;
+            mouseoldy = (int)y; // so we can move wrt x , y
+        }
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+        scene->ResetPositions();
+    }
 }
 
-Scenario *scene;
+void mousedrag_callback(GLFWwindow* window, double x, double y) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        int yloc = (int)y - mouseoldy;	// We will use the y coord to zoom in/out
+        int xloc = (int)x - mouseoldx;
+        if (yloc) {
+            (yloc < 0) ? scene->Move(2, 1, 1) : scene->Move(2, 1, 0);
+        }
+        if (xloc) {
+            (xloc > 0) ? scene->Move(2, 0, 1) : scene->Move(2, 0, 0);
+        }
 
-//Rubik test;
-
-void updateModelView() {
-    UpZ = getUpz(eyeY, eyeZ);
-    modelview = glm::lookAt(glm::vec3(eyeX, eyeY, eyeZ), glm::vec3(originX, originY, originZ), glm::vec3(UpX, UpY, UpZ));
-    glUniformMatrix4fv(modelviewPos, 1, GL_FALSE, &modelview[0][0]);
+        mouseoldy = (int)y;
+        mouseoldx = (int)x;
+    }
 }
+
 /* Defines what to do when various keys are pressed */
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 /* Reshapes the window appropriately */
 void reshape_callback(GLFWwindow* window, int w, int h);
 
-void init(void)
-{
-    glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
-
-    /* initialize viewing values  */
-    projection = glm::mat4(1.0f); // The identity matrix
-    glEnable(GL_DEPTH_TEST);
-
-    // Think about this.  Why is the up vector not normalized?
-    UpZ = getUpz(eyeY, eyeZ);
-    modelview = glm::lookAt(glm::vec3(eyeX, eyeY, eyeZ), glm::vec3(originX, originY, originZ), glm::vec3(UpX, UpY, UpZ));
-
-    // Now create the buffer objects to be used in the scene later
-    // Remember to delete all the VAOs and VBOs that you create when the program terminates!
-
-    GetShaders();
-
-    //test.SetUp(ShaderProgram);
-
-    // Get the positions of the uniform variables
-    projectionPos = glGetUniformLocation(ShaderProgram, "projection");
-    modelviewPos = glGetUniformLocation(ShaderProgram, "modelview");
-    // Pass the projection and modelview matrices to the shader
-    glUniformMatrix4fv(projectionPos, 1, GL_FALSE, &projection[0][0]);
-    glUniformMatrix4fv(modelviewPos, 1, GL_FALSE, &modelview[0][0]);
-
-}
-
-int main()
-{
-    // Requests the type of buffers (Single, RGB).
-    // Think about what buffers you would need...
+int main() {
 
     glfwInit(); //glutInit(&argc, argv);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -218,8 +191,8 @@ int main()
 
     glfwSetFramebufferSizeCallback(window, reshape_callback);	//glutReshapeFunc(reshape) ;
     glfwSetKeyCallback(window, key_callback);					//glutKeyboardFunc(keyboard);
-    //glfwSetMouseButtonCallback(window, mouse_callback);		//glutMouseFunc(mouse) ;
-    //glfwSetCursorPosCallback(window, mousedrag_callback);		//glutMotionFunc(mousedrag) ;
+    glfwSetMouseButtonCallback(window, mouse_callback);		//glutMouseFunc(mouse) ;
+    glfwSetCursorPosCallback(window, mousedrag_callback);		//glutMotionFunc(mousedrag) ;
 
     // First scene render
     reshape_callback(window, sizeW, sizeH);
@@ -232,7 +205,6 @@ int main()
 
         scene->Draw();
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -244,9 +216,8 @@ int main()
 
 }
 
-void key_callback(GLFWwindow * window, int key, int scancode, int action, int mods) {
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        scene->Delete();
         glfwSetWindowShouldClose(window, true);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
@@ -257,11 +228,12 @@ void key_callback(GLFWwindow * window, int key, int scancode, int action, int mo
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         scene->Move(2, 1, 0);
+        //scene->MoveUp();
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         scene->Move(2, 1, 1);
     }
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
         scene->ResetPositions();
     }
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
@@ -270,12 +242,70 @@ void key_callback(GLFWwindow * window, int key, int scancode, int action, int mo
     if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
         scene->Spanning(false);
     }
+
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        scene->rb.giro1();
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        scene->rb.giro2();
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        scene->rb.giro3();
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        scene->rb.giro4();
+    }
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+        scene->rb.giro5();
+    }
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+        scene->rb.giro6();
+    }
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+        scene->rb.giro7();
+    }
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+        scene->rb.giro8();
+    }
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+        scene->rb.giro9();
+    }
+
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        scene->rb.giro1inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        scene->rb.giro2inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        scene->rb.giro3inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        scene->rb.giro4inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+        scene->rb.giro5inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+        scene->rb.giro6inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+        scene->rb.giro7inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        scene->rb.giro8inv();
+    }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+        scene->rb.giro9inv();
+    }
 }
 
 void reshape_callback(GLFWwindow* window, int w, int h) {
     glViewport(0, 0, (GLsizei)w, (GLsizei)h);
     if (h > 0) {
-        scene->Projection = glm::perspective(45.0f / 180.0f * glm::pi<float>(), (GLfloat)w / (GLfloat)h, 1.0f, 100.0f);
+        scene->Projection = glm::perspective(glm::radians(45.0f), (GLfloat)w / (GLfloat)h, 1.0f, 100.0f);
         glUniformMatrix4fv(scene->ProjectionPos, 1, GL_FALSE, &scene->Projection[0][0]);
     }
 
