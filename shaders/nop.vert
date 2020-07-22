@@ -1,16 +1,20 @@
 # version 330 core
-// Do not modify the above version directive to anything older than 330, as
-// modern OpenGL will not work properly due to it not being core at the time.
 
-// Shader inputs
 layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+layout (location = 2) in vec2 texCoord;
 
-// Uniform variables
 uniform mat4 modelview;
 uniform mat4 projection;
 uniform mat4 transform;
+uniform mat4 disloc;
+
+out vec3 ourColor;
+out vec2 v_TexCoord;
 
 void main() {
-    gl_Position = projection * modelview * transform * vec4(position, 1.0f);
+    gl_Position = projection * modelview * disloc * transform * vec4(position, 1.0f);
+    ourColor = color;
+    v_TexCoord = texCoord;
 }
 
