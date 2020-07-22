@@ -1,4 +1,4 @@
-project( Rubikv4 )
+project( RubikCube )
 
 message( "Configuring main application - ${PROJECT_NAME} : " )
 

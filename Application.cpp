@@ -102,8 +102,8 @@ void GetShaders() {
     fragment_shader_path = "//home//manuel//Documents//Projects//OpenGL//GLFW_GLAD_GLUT_GLEW_cmake_project//src//mytest1_glut//shaders//nop.frag";
 
 #elif defined(_WIN32) || defined(WIN32) 
-    vertex_shader_path = "C://Users//Raymond//Desktop//CG-Library//src//Rubikv4//nop.vert";
-    fragment_shader_path = "C://Users//Raymond//Desktop//CG-Library//src//Rubikv4//nop.frag";
+    vertex_shader_path = "C://Users//Renato//Desktop//GLFW_GLAD_GLUT_GLEW_cmake_project_Windows_Linux//GLFW_GLAD_GLUT_GLEW_cmake_project//src//RubikCube//shaders//nop.vert";
+    fragment_shader_path = "C://Users//Renato//Desktop//GLFW_GLAD_GLUT_GLEW_cmake_project_Windows_Linux//GLFW_GLAD_GLUT_GLEW_cmake_project//src//RubikCube//shaders//nop.frag";
                     
 #endif
 
@@ -189,7 +189,7 @@ float anim = 0;
 int girox  = 0;
 bool mover = false;
 bool bloquear = false;
-float dislocar = 0.0;
+float dislocar = 0.05;
 
 string randomizex() {
     string res = "";
@@ -219,6 +219,7 @@ void menu() {
     cout << "U : Giro Cara blanca (antihorario)" << endl;
     cout << "O : Giro Cara azul (horario)" << endl;
     cout << "L : Giro Cara azul (antihorario)" << endl;
+	cout << "C : Random Instantaneo" << endl;
     cout << endl;
     cout << "Z : Zoom Out" << endl;
     cout << "X : Zoom In" << endl;
@@ -308,6 +309,45 @@ int solucionar = 0;
 bool res = true;
 
 vector<int> movements;
+
+
+void randomize(Scenario* cubo) {
+	Cubo = randomizex();
+	int opcion = 0;
+	for (int i = 0; i < Cubo.length(); ++i) {
+		char temp = Cubo[i];
+		opcion++;
+		switch (temp) {
+		case ('R'):
+			scene->rb.giro6();
+			scene->rb.animacion(6, 90);
+			break;
+		case ('L'):
+			scene->rb.giro4inv();
+			scene->rb.animacion(13, 90);
+			break;
+		case ('U'):
+			scene->rb.giro9();
+			scene->rb.animacion(9, 90);
+			break;
+		case ('D'):
+			scene->rb.giro7inv();
+			scene->rb.animacion(16, 90);
+			break;
+		case ('F'):
+			scene->rb.giro1inv();
+			scene->rb.animacion(10, 90);
+			break;
+		case ('B'):
+			scene->rb.giro3();
+			scene->rb.animacion(3, 90);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 int main()
 {
     cout << "Observacion: Al ser el agoritmo principiante, puede demorar bastantes movimientos, aunque se hagan pocos movimientos en el desordenamiento de este.\n";
@@ -333,45 +373,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Cubo = randomizex(); 
-    
-   
-
     scene = new Scenario();
     cout << endl;
-    int opcion=0;
-    for (int i = 0; i < Cubo.length(); ++i) {
-        char temp = Cubo[i];
-        opcion++;
-        switch (temp) {
-        case ('R'):
-            scene->rb.giro6();
-            scene->rb.animacion(6, 90);
-            break;
-        case ('L'):
-            scene->rb.giro4inv();
-            scene->rb.animacion(13, 90);
-            break;
-        case ('U'):
-            scene->rb.giro9();
-            scene->rb.animacion(9, 90);
-            break;
-        case ('D'):
-            scene->rb.giro7inv();
-            scene->rb.animacion(16, 90);
-            break;
-        case ('F'):
-            scene->rb.giro1inv();
-            scene->rb.animacion(10, 90);
-            break;
-        case ('B'):
-            scene->rb.giro3();
-            scene->rb.animacion(3, 90);
-            break;
-        default:
-            break;
-        }
-    }
     
     /*
     R -> 6
@@ -459,7 +462,7 @@ int main()
         }
     }
     */
-
+	scene->rb.dislocar(dislocar);
     menu();
     while (!glfwWindowShouldClose(window)) //glutMainLoop(); 
     {
@@ -532,6 +535,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             scene->rb.dislocar(dislocar);
         }
     }
+
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		randomize(scene);
+	}
 
     if (bloquear == false && glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
         sol = true;
