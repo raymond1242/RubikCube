@@ -40,7 +40,7 @@ struct Texture {
                 imgPos{{0.008f, 0.15f, 0.15f, 0.9f}, {0.18f, 0.15f, 0.315f, 0.9f}, {0.345f, 0.15f, 0.475f, 0.9f}, 
                        {0.5f, 0.15f, 0.635f, 0.9f},  {0.665f, 0.15f, 0.8f, 0.9f}, {0.83f, 0.15f, 0.98f, 0.9f}}
     {
-        FilePath = "C://Users//Renato//Desktop//GLFW_GLAD_GLUT_GLEW_cmake_project_Windows_Linux//GLFW_GLAD_GLUT_GLEW_cmake_project//src//RubikCube//CuboRubik.png";
+        FilePath = "C://Users//Raymond//Desktop//CG-Library//src//RubikCube//CuboRubik.png";
         glGenTextures(1, &renderedID);
         glBindTexture(GL_TEXTURE_2D, renderedID);
 

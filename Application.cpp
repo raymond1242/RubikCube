@@ -102,8 +102,8 @@ void GetShaders() {
     fragment_shader_path = "//home//manuel//Documents//Projects//OpenGL//GLFW_GLAD_GLUT_GLEW_cmake_project//src//mytest1_glut//shaders//nop.frag";
 
 #elif defined(_WIN32) || defined(WIN32) 
-    vertex_shader_path = "C://Users//Renato//Desktop//GLFW_GLAD_GLUT_GLEW_cmake_project_Windows_Linux//GLFW_GLAD_GLUT_GLEW_cmake_project//src//RubikCube//shaders//nop.vert";
-    fragment_shader_path = "C://Users//Renato//Desktop//GLFW_GLAD_GLUT_GLEW_cmake_project_Windows_Linux//GLFW_GLAD_GLUT_GLEW_cmake_project//src//RubikCube//shaders//nop.frag";
+    vertex_shader_path = "C://Users//Raymond//Desktop//CG-Library//src//RubikCube//shaders//nop.vert";
+    fragment_shader_path = "C://Users//Raymond//Desktop//CG-Library//src//RubikCube//shaders//nop.frag";
                     
 #endif
 
@@ -312,11 +312,10 @@ vector<int> movements;
 
 
 void randomize(Scenario* cubo) {
-	Cubo = randomizex();
-	int opcion = 0;
-	for (int i = 0; i < Cubo.length(); ++i) {
-		char temp = Cubo[i];
-		opcion++;
+    string cub = randomizex();
+    Cubo += cub;
+	for (int i = 0; i < cub.length(); ++i) {
+		char temp = cub[i];
 		switch (temp) {
 		case ('R'):
 			scene->rb.giro6();
